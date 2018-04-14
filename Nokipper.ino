@@ -1,5 +1,22 @@
+/*
+ * Copyright (C) 2018 Lakoja on github.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
 #include "I2Cdev.h"
 #include "MPU6050.h"
+#include "GY25.h"
 #include "Wire.h"
 #include "Kalman.h" // Source: https://github.com/TKJElectronics/KalmanFilter
 #include "StepperMotors.h"
@@ -19,6 +36,7 @@ Kalman kalmanX;
 Kalman kalmanY;
 
 MPU6050 mpu; //(0x69); // <-- use for AD0 high
+GY25 gy25;
 bool sensorOk = false;
 
 StepperMotors motor;
@@ -29,6 +47,8 @@ void setup() {
 
   Serial.println("Initializing I2C devices...");
   mpu.initialize();
+
+  gy25.init();
 
   // verify connection
   Serial.println("Testing device connections...");
@@ -69,6 +89,8 @@ uint32_t timer = 0;
 uint32_t lastTimeOut = 0;
 
 void loop() {
+
+  gy25.drive();
 
   if (!sensorOk) {
     return;
