@@ -19,10 +19,11 @@
  
 #include "HardwareSerial.h"
 
+HardwareSerial Serial2(2);
+  
 class GY25
 {
 private:
-  HardwareSerial Serial2(2);
    
   float yaw, pitch, roll;
   unsigned char Re_buf[8];
