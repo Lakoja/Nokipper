@@ -38,6 +38,8 @@ Kalman kalmanY;
 MPU6050 mpu; //(0x69); // <-- use for AD0 high
 GY25 gy25;
 bool sensorOk = false;
+uint32_t valueCounter = 0;
+uint32_t systemStartTime = 0;
 
 StepperMotors motor;
 
@@ -80,7 +82,8 @@ void setup() {
 
     motor.start("motor");
 
-    motor.requestForward(0.1, 2000);
+    systemStartTime = millis();
+    motor.requestForward(0.1, 1000);
   }
 }
 
@@ -90,7 +93,7 @@ uint32_t lastTimeOut = 0;
 
 void loop() {
 
-  gy25.drive();
+  //gy25.drive();
 
   if (!sensorOk) {
     return;
@@ -104,17 +107,25 @@ void loop() {
   //accelgyro.getAcceleration(&ax, &ay, &az);
   //accelgyro.getRotation(&gx, &gy, &gz);
 
-
   uint32_t now = millis();
   if (now - lastTimeOut >= 1000) {
+    /*
     Serial.print("a/g:\t");
     Serial.print(ax); Serial.print("\t");
     Serial.print(ay); Serial.print("\t");
     Serial.print(az); Serial.print("\t");
     Serial.print(gx); Serial.print("\t");
     Serial.print(gy); Serial.print("\t");
-    Serial.println(gz);
+    Serial.println(gz);*/
+
+    //Serial.println("per/s "+String(valueCounter / ((now - systemStartTime) / 1000.0)));
+
+    motor.requestReverse(0.05, 1000);
+
+    Serial.println("steps L "+String(motor.getMicroStepsLeft())+" R "+String(motor.getMicroStepsRight()));
   }
+
+  valueCounter++;
 
   double accXangle, accYangle; // Angle calculate using the accelerometer
   double gyroXangle, gyroYangle; // Angle calculate using the gyro

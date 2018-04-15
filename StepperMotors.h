@@ -25,7 +25,6 @@ class StepperMotors: public Task
 private:
   const float DEAD_ZONE_SPEED_LOW = 0.02; // have _some_ movement also for very low speeds
   
-  uint32_t systemStart;
   // the externally (or automatically) requested values
   float motorRSpeedDesired = 0;
   float motorLSpeedDesired = 0;
@@ -33,11 +32,12 @@ private:
   double currentPwmLeft = 1;
   uint32_t motorREndTime;
   uint32_t motorLEndTime;
+  uint64_t lastDriveLoopMicros = 0;
   uint32_t lastDriveLoopTime = 0;
   uint32_t lastCounterOutTime = 0;
 
-  int32_t microStepsLeft = 0;
-  int32_t microStepsRight = 0;
+  double microStepsLeft = 0; // can be negative; 0 means not real movement since start
+  double microStepsRight = 0;
 
   uint8_t stepPinRight;
   uint8_t dirPinRight;
@@ -92,16 +92,17 @@ public:
     ledcWrite(0, 63);
     ledcWrite(2, 63);
 
-    systemStart = millis();
+    lastDriveLoopMicros = esp_timer_get_time();
   }
 
   void run()
   {
     while (true) {
-      uint32_t now = millis();
-  
-      if (lastDriveLoopTime > 0) {
-        uint16_t passed = now - lastDriveLoopTime;
+      uint64_t nowMicros = esp_timer_get_time();
+      uint32_t now = nowMicros/1000;
+      
+      if (lastDriveLoopMicros > 0) {
+        uint32_t passedMicros = nowMicros - lastDriveLoopMicros;
         
         if (now >= motorREndTime) {
           motorRSpeedDesired = 0;
@@ -111,9 +112,14 @@ public:
           motorLSpeedDesired = 0;
         }
 
-        double fromSecond = passed / 1000.0;
-        microStepsLeft += (int32_t)(currentPwmLeft * fromSecond);
-        microStepsRight += (int32_t)(currentPwmRight * fromSecond);
+        double fromSecond = passedMicros / 1000000.0;
+        
+        microStepsLeft += currentPwmLeft * fromSecond;
+
+        //Serial.print("m"+String(now-lastDriveLoopTime)+"p"+String(passedMicros)+"s"+String(microStepsLeft)+" ");
+        //Serial.print("p"+String(passedMicros / 1000.0)+"s"+String(microStepsLeft)+" ");
+       
+        microStepsRight += currentPwmRight * fromSecond;
       }
 
       double rSpeed = getNonDeadSpeed(motorRSpeedDesired) * motorMaxTurns / 60.0 * stepsPerRotation;
@@ -123,15 +129,26 @@ public:
 
       if (now - lastCounterOutTime > 1200) {
         //Serial.println("R r"+String(rSpeed)+" L r"+String(lSpeed));
-        Serial.println("msl "+String(microStepsLeft)+" msr "+String(microStepsRight));
+        //Serial.println("msl "+String(microStepsLeft)+" msr "+String(microStepsRight));
         
         lastCounterOutTime = now;
       }
   
+      lastDriveLoopMicros = nowMicros;
       lastDriveLoopTime = now;
 
       sleepAfterLoop(4, now);
     }
+  }
+
+  double getMicroStepsRight()
+  {
+    return microStepsRight;
+  }
+  
+  double getMicroStepsLeft()
+  {
+    return microStepsLeft;
   }
 
   void requestMovement(float forward, float right, uint16_t durationMillis = 1000) {
@@ -196,7 +213,7 @@ private:
     if (pwmValue != currentPwmRight) {
       
       if (showDebug) {
-        Serial.print("RRa"+String(pwmValue)+" ");
+        //Serial.print("RRa"+String(pwmValue)+" ");
   
         if (++outCounter % 20 == 0)
           Serial.println();
@@ -221,7 +238,7 @@ private:
 
       
       if (showDebug) { // && random(5) == 4) {
-        Serial.print("LRai"+String(speedInt)+" ");
+        //Serial.print("LRai"+String(speedInt)+" ");
   
         if (++outCounter % 20 == 0)
           Serial.println();
