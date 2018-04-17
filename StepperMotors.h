@@ -23,8 +23,6 @@
 class StepperMotors: public Task
 {
 private:
-  const float DEAD_ZONE_SPEED_LOW = 0.02; // have _some_ movement also for very low speeds
-  
   // the externally (or automatically) requested values
   float motorRSpeedDesired = 0;
   float motorLSpeedDesired = 0;
@@ -122,8 +120,8 @@ public:
         microStepsRight += currentPwmRight * fromSecond;
       }
 
-      double rSpeed = getNonDeadSpeed(motorRSpeedDesired) * motorMaxTurns / 60.0 * stepsPerRotation;
-      double lSpeed = getNonDeadSpeed(motorLSpeedDesired) * motorMaxTurns / 60.0 * stepsPerRotation;
+      double rSpeed = motorRSpeedDesired * motorMaxTurns / 60.0 * stepsPerRotation;
+      double lSpeed = motorLSpeedDesired * motorMaxTurns / 60.0 * stepsPerRotation;
       switchMotorR(rSpeed);
       switchMotorL(lSpeed);
 
@@ -208,8 +206,6 @@ private:
 
   void switchMotorR(double pwmValue)
   {
-    // TODO consider getNonDeadSpeed
-    
     if (pwmValue != currentPwmRight) {
       
       if (showDebug) {
@@ -253,17 +249,6 @@ private:
 
   uint16_t outCounter = 0;
   bool showDebug = true;
-
-  double getNonDeadSpeed(float speed)
-  {
-    double nonDeadSpeed = 0;
-    if (speed != 0) {
-      float sign = speed < 0 ? -1 : +1;
-      nonDeadSpeed = sign * DEAD_ZONE_SPEED_LOW + (1 - DEAD_ZONE_SPEED_LOW) * speed;
-    }
-
-    return nonDeadSpeed;
-  }
 };
 
 #endif
