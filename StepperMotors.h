@@ -209,10 +209,10 @@ private:
     if (pwmValue != currentPwmRight) {
       
       if (showDebug) {
-        //Serial.print("RRa"+String(pwmValue)+" ");
+        //(Serial.print("RRa"+String(pwmValue)+" ");
   
-        if (++outCounter % 20 == 0)
-          Serial.println();
+        //if (++outCounter % 20 == 0)
+          //Serial.println();
       }
         
       int32_t speedInt = round(pwmValue);
@@ -236,8 +236,8 @@ private:
       if (showDebug) { // && random(5) == 4) {
         //Serial.print("LRai"+String(speedInt)+" ");
   
-        if (++outCounter % 20 == 0)
-          Serial.println();
+        //if (++outCounter % 20 == 0)
+          //Serial.println();
       }
 
       digitalWrite(dirPinLeft, pwmValue >= 0 ? 1 : 0); // inverted to right

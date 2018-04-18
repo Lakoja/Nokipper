@@ -21,18 +21,18 @@
 #include "MPU6050.h"
 #include "Kalman.h" // Source: https://github.com/TKJElectronics/KalmanFilter
 
-// Kalman demo code copied from http://forum.arduino.cc/index.php?topic=261200.0
-Kalman kalmanX;
-Kalman kalmanY;
-
 class GY521
 {
 private:
+  Kalman kalmanX; // Kalman demo code copied from http://forum.arduino.cc/index.php?topic=261200.0
+  Kalman kalmanY;
   MPU6050 mpu; //(0x69); // <-- use for AD0 high
   bool sensorOk = false;
   bool first = true;
   uint64_t lastMicros = 0;
   uint32_t lastTimeOut = 0;
+  double kalAngleX;
+  double kalAngleY;
 
 public:
   bool init()
@@ -40,12 +40,12 @@ public:
     Wire.begin();
 
     Serial.println("Initializing I2C devices...");
-    mpu.initialize();
+    bool b = mpu.initialize();
 
     Serial.println("Testing device connections...");
     sensorOk = mpu.testConnection();
   
-    Serial.println(sensorOk ? "MPU6050 connection successful" : "MPU6050 connection failed");
+    Serial.println(String(b)+" " +String()+ (sensorOk ? "MPU6050 connection successful" : "MPU6050 connection failed"));
 
     if (sensorOk) {
       int16_t gx, gy, gz;
@@ -68,6 +68,16 @@ public:
     return sensorOk;
   }
 
+  double getX()
+  {
+    return kalAngleX;
+  }
+
+  double getY()
+  {
+    return kalAngleY;
+  }
+
   void drive()
   {
     uint64_t now = esp_timer_get_time();
@@ -83,7 +93,6 @@ public:
     
     double accXangle, accYangle; // Angle calculate using the accelerometer
     double gyroXangle, gyroYangle; // Angle calculate using the gyro
-    double kalAngleX, kalAngleY; // Calculate the angle using a Kalman filter
   
     accYangle = (atan2(ax, az) + PI) * RAD_TO_DEG;
     accXangle = (atan2(ay, az) + PI) * RAD_TO_DEG;
@@ -100,7 +109,7 @@ public:
       double gyroYrate = -((double)gy / 131.0);
       gyroXangle += gyroXrate * passedSeconds; // Calculate gyro angle without any filter
       gyroYangle += gyroYrate * passedSeconds;
-    
+
       kalAngleX = kalmanX.getAngle(accXangle, gyroXrate, passedSeconds); // Calculate the angle using a Kalman filter
       kalAngleY = kalmanY.getAngle(accYangle, gyroYrate, passedSeconds);
   
@@ -115,7 +124,7 @@ public:
         Serial.print(gy); Serial.print("\t");
         Serial.println(gz);*/
         
-        Serial.println(String(kalAngleX)+" , "+String(kalAngleY));
+        //Serial.println(String(kalAngleX)+" , "+String(kalAngleY));
         lastTimeOut = now;
       }
     }

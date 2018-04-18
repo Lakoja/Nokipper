@@ -43,6 +43,16 @@ public:
     Serial2.write(0X52);
     systemStartTime = millis();
   }
+
+  float getYaw()
+  {
+    return yaw;
+  }
+
+  float getRoll()
+  {
+    return roll;
+  }
   
   void drive()
   {
@@ -54,7 +64,7 @@ public:
         if (now - lastTimeOut > 200) {
   
           float perSecond = valueCounter / ((now - systemStartTime) / 1000.0f);
-         Serial.println(String(yaw)+" "+String(pitch)+" "+String(roll)+" r "+String(perSecond));
+         //Serial.println(String(yaw)+" "+String(pitch)+" "+String(roll)+" r "+String(perSecond));
          lastTimeOut = now;
         }
     } else {
